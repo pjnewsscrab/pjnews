@@ -545,6 +545,14 @@ def has_word(text, word):
     return low in text
 
 
+# 게임·외교는 '위원장 선임', '특별위원회' 같은 국회·입법의 범용 단어와
+# 표현이 겹친다. 두 섹션이 우선순위 목록에 있을 때는 원래 먼저 검사되어
+# 문제가 없었지만, config.json에서 우선순위에서 빼면 국회·입법이 먼저 걸려
+# '게임특별위원회 위원장 선임' 같은 기사를 국회·입법으로 잘못 분류한다.
+# 그래서 이 둘은 우선순위 여부와 무관하게 제목만으로 항상 먼저 확인한다.
+CLASSIFICATION_PRECHECK = ('게임·넷마블', '외교·통일')
+
+
 def profile_section(a):
     """우선 섹션(게임·외교·국회)을 제목 기준으로 먼저 판정한다.
 
@@ -553,6 +561,10 @@ def profile_section(a):
     """
     headline = a['title'].lower().replace('예산군', '').replace('예산읍', '')
     body = a.get('description', '').lower()
+    for section in CLASSIFICATION_PRECHECK:
+        if section not in PRIORITY_SECTIONS and any(
+                has_word(headline, w) for w in SECTION_WORDS.get(section, [])):
+            return section
     for section in PRIORITY_SECTIONS:
         # 우선순위가 높은 섹션은 제목과 본문 설명을 함께 본다. 그래야 '비상설특별위원회
         # 구성'이 제목이고 게임특위는 본문에만 있는 기사가 국회가 아닌 게임으로 잡힌다.
