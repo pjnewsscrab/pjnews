@@ -4,11 +4,11 @@ on:
   workflow_dispatch:
     inputs:
       daily_report:
-        description: '일일 리포트 트랙 (none=뉴스 배치만 실행, all=4개 트랙 전체)'
+        description: '일일 리포트 트랙 (none=뉴스 배치만 실행)'
         required: false
         default: 'none'
         type: choice
-        options: ['none', 'game', 'foreign', 'climate', 'paju', 'all']
+        options: ['none', 'climate', 'paju', 'game', 'foreign']
   schedule:
     # 평일 05~23시 매시 07분. 09시를 포함해 빈 시간대가 없다.
     - cron: '7 5-23 * * 1-5'
@@ -16,18 +16,18 @@ on:
     # 주말은 3시간 간격. lookback 이 4시간으로 자동 확대돼 경계 누락을 막는다.
     - cron: '7 5,8,11,14,17,20,23 * * 0,6'
       timezone: Asia/Seoul
-    # 조간 브리핑(게임·넷마블). 08:00.
-    - cron: '0 8 * * 1-5'
-      timezone: Asia/Seoul
-    # 마감 리포트(외교·통일). 18:00.
-    - cron: '0 18 * * 1-5'
-      timezone: Asia/Seoul
     # 조간 브리핑(기후에너지환경노동). 08:30.
     - cron: '30 8 * * 1-5'
       timezone: Asia/Seoul
     # 마감 리포트(파주시). 18:30.
     - cron: '30 18 * * 1-5'
       timezone: Asia/Seoul
+    # 게임·외교 조간/마감(08:00·18:00)은 더 이상 필요 없어 스케줄에서 뺐다.
+    # 나중에 다시 필요하면 이 두 줄을 되살리면 된다:
+    #   - cron: '0 8 * * 1-5'
+    #     timezone: Asia/Seoul
+    #   - cron: '0 18 * * 1-5'
+    #     timezone: Asia/Seoul
 
 permissions:
   contents: write
