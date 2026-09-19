@@ -1,0 +1,63 @@
+name: Policy News Bot
+
+on:
+  workflow_dispatch:
+    inputs:
+      daily_report:
+        description: '일일 리포트 트랙 (none=뉴스 배치만 실행, all=4개 트랙 전체)'
+        required: false
+        default: 'none'
+        type: choice
+        options: ['none', 'game', 'foreign', 'climate', 'paju', 'all']
+  schedule:
+    # 평일 05~23시 매시 07분. 09시를 포함해 빈 시간대가 없다.
+    - cron: '7 5-23 * * 1-5'
+      timezone: Asia/Seoul
+    # 주말은 3시간 간격. lookback 이 4시간으로 자동 확대돼 경계 누락을 막는다.
+    - cron: '7 5,8,11,14,17,20,23 * * 0,6'
+      timezone: Asia/Seoul
+    # 조간 브리핑(게임·넷마블). 08:00.
+    - cron: '0 8 * * 1-5'
+      timezone: Asia/Seoul
+    # 마감 리포트(외교·통일). 18:00.
+    - cron: '0 18 * * 1-5'
+      timezone: Asia/Seoul
+    # 조간 브리핑(기후에너지환경노동). 08:30.
+    - cron: '30 8 * * 1-5'
+      timezone: Asia/Seoul
+    # 마감 리포트(파주시). 18:30.
+    - cron: '30 18 * * 1-5'
+      timezone: Asia/Seoul
+
+permissions:
+  contents: write
+
+concurrency:
+  group: policy-news-delivery
+  cancel-in-progress: false
+
+jobs:
+  news:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+      - name: Collect and send news
+        env:
+          NAVER_CLIENT_ID: ${{ secrets.NAVER_CLIENT_ID }}
+          NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TELEGRAM_POLICY_CHAT_ID: ${{ secrets.TELEGRAM_POLICY_CHAT_ID }}
+          TELEGRAM_CLIMATE_CHAT_ID: ${{ secrets.TELEGRAM_CLIMATE_CHAT_ID }}
+          TELEGRAM_PAJU_CHAT_ID: ${{ secrets.TELEGRAM_PAJU_CHAT_ID }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GH_TOKEN: ${{ github.token }}
+          STATE_BRANCH: ${{ github.event.repository.default_branch }}
+          EVENT_NAME: ${{ github.event_name }}
+          SCHEDULE_RULE: ${{ github.event.schedule }}
+          RUN_DAILY: ${{ inputs.daily_report }}
+        run: python -X utf8 runner.py
