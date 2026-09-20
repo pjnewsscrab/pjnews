@@ -165,18 +165,23 @@ def main():
     manual_track = os.environ.get('RUN_DAILY', 'none').strip().lower()
 
     tracks = []
+    run_combined = False
     if event == 'schedule':
         track = bot.DAILY_SCHEDULE.get(rule)
-        if track:
+        if track == 'combined':
+            run_combined = True
+        elif track:
             tracks = [track]
     elif event == 'workflow_dispatch':
-        if manual_track == 'all':
+        if manual_track == 'combined':
+            run_combined = True
+        elif manual_track == 'all':
             tracks = list(bot.DAILY_TRACKS)
         elif manual_track == 'both':  # 이전 워크플로와의 하위 호환용 별칭
             tracks = ['foreign', 'game']
         elif manual_track in bot.DAILY_TRACKS:
             tracks = [manual_track]
-    daily_only = bool(tracks)
+    daily_only = bool(tracks) or run_combined
 
     db = build_db(load_state())
     persist = make_persist(db)
@@ -200,11 +205,14 @@ def main():
     args = SimpleNamespace(demo=False, ai=False, send=True, daily=None,
                            watch=(event == 'schedule'))
     LOG.info('실행 %s / 검색어 %d개 / 일일 리포트 %s',
-             event or 'local', len(cfg['queries']), ','.join(tracks) or '없음')
+             event or 'local', len(cfg['queries']),
+             'combined' if run_combined else (','.join(tracks) or '없음'))
     run_error = None
     try:
         if not daily_only:
             bot.run(args, cfg, db)
+        if run_combined:
+            bot.run_daily_combined(args, cfg, db)
         for track in tracks:
             bot.run_daily(args, cfg, db, track_name=track)
     except Exception as error:
