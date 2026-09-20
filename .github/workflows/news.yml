@@ -4,11 +4,11 @@ on:
   workflow_dispatch:
     inputs:
       daily_report:
-        description: '일일 리포트 트랙 (none=실시간 배치, combined=통합 브리핑 수동 테스트)'
+        description: '평소엔 그냥 combined로 두고 Run workflow만 누르세요. none은 예전 방식(기사 1건당 메시지 1개, 전체 카테고리) 테스트용이라 한 번에 여러 통이 옵니다.'
         required: false
-        default: 'none'
+        default: 'combined'
         type: choice
-        options: ['none', 'combined', 'climate', 'paju', 'assembly']
+        options: ['combined', 'climate', 'paju', 'assembly', 'none']
   schedule:
     # 아침 08:00 1회. 기후에너지환경노동+파주시+국회입법 3개 트랙을 하나로 묶어
     # 텔레그램 메시지로 보낸다(run_daily_combined). 하루 중 이 한 번만 자동 실행된다.
