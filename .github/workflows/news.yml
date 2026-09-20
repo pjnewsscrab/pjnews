@@ -4,29 +4,25 @@ on:
   workflow_dispatch:
     inputs:
       daily_report:
-        description: '일일 리포트 트랙 (none=뉴스 배치만 실행)'
+        description: '일일 리포트 트랙 (none=실시간 배치, combined=통합 브리핑 수동 테스트)'
         required: false
         default: 'none'
         type: choice
-        options: ['none', 'climate', 'paju', 'game', 'foreign']
+        options: ['none', 'combined', 'climate', 'paju', 'assembly']
   schedule:
-    # 평일 05~23시 매시 07분. 09시를 포함해 빈 시간대가 없다.
-    - cron: '7 5-23 * * 1-5'
+    # 아침 08:00 1회. 기후에너지환경노동+파주시+국회입법 3개 트랙을 하나로 묶어
+    # 텔레그램 메시지로 보낸다(run_daily_combined). 하루 중 이 한 번만 자동 실행된다.
+    - cron: '0 8 * * 1-5'
       timezone: Asia/Seoul
-    # 주말은 3시간 간격. lookback 이 4시간으로 자동 확대돼 경계 누락을 막는다.
-    - cron: '7 5,8,11,14,17,20,23 * * 0,6'
-      timezone: Asia/Seoul
-    # 조간 브리핑(기후에너지환경노동). 08:30.
-    - cron: '30 8 * * 1-5'
-      timezone: Asia/Seoul
-    # 마감 리포트(파주시). 18:30.
-    - cron: '30 18 * * 1-5'
-      timezone: Asia/Seoul
-    # 게임·외교 조간/마감(08:00·18:00)은 더 이상 필요 없어 스케줄에서 뺐다.
-    # 나중에 다시 필요하면 이 두 줄을 되살리면 된다:
-    #   - cron: '0 8 * * 1-5'
+    # 예전에는 실시간 상시 배치(매시 07분)와 트랙별 개별 리포트(게임·외교·기후·파주
+    # 각각 다른 시각)가 함께 돌아서 하루에도 여러 번, 한 번에 7~8건씩 알림이 왔다.
+    # 지금은 위 08:00 통합 브리핑 한 번만 자동으로 온다. 예전 방식으로 되돌리려면
+    # 아래 줄들을 되살리고 news_bot_v4.py 의 DAILY_SCHEDULE 도 함께 맞추면 된다:
+    #   - cron: '7 5-23 * * 1-5'
     #     timezone: Asia/Seoul
-    #   - cron: '0 18 * * 1-5'
+    #   - cron: '7 5,8,11,14,17,20,23 * * 0,6'
+    #     timezone: Asia/Seoul
+    #   - cron: '30 18 * * 1-5'
     #     timezone: Asia/Seoul
 
 permissions:
